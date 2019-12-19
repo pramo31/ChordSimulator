@@ -54,7 +54,7 @@ class WebServer() {
                   complete(StatusCodes.Accepted, "Sorry, the server is busy right now. Please try again later")
               }
             }
-          }, put {
+          }, post {
             parameter("title".as[String], "date".as[String]) { (key, value) =>
               SimulationUtils.fetchRandomNode(chordSystem, chordNodes) ! WriteKeyToNode(key, value, 0)
               complete(StatusCodes.Accepted, "The movie %s with its release date %s has been written to the database".format(key, value))

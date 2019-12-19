@@ -1,77 +1,196 @@
- Course Project
-### Description: you will create and evaluate Chord, a cloud overlay network algorithm with convergent hashing using your own Akka/HTTP-based simulator.
-### Grade: 25%.
-#### You can obtain this Git repo using the command ```git clone git@bitbucket.org:cs441_fall2019/courseproject.git```. You need to fork this repo, as explained below and you cannot push your code into this repo, otherwise, your grade for this course project will be ZERO!
+## UIC CS441 - Engineering Distributed Objects for Cloud Computing
 
-## Preliminaries
-If you have not already done so as part of your previous course homeworks, you must create your account at [BitBucket](https://bitbucket.org/), a Git repo management system. It is imperative that you use your UIC email account that has the extension @uic.edu. Once you create an account with your UIC address, BibBucket will assign you an academic status that allows you to create private repos. Bitbucket users with free accounts cannot create private repos, which are essential for submitting your homeworks and the course project. Please contact your TA from your **UIC.EDU** account and they will add you to the team repo as developers, since they already have the admin privileges. Please use your emails from the class registration roster to add you to the team and you will receive an invitation from BitBucket to join the team. Since it is still a large class, please use your UIC email address for communications or Piazza and avoid emails from other accounts like funnybunny1992@gmail.com. If you don't receive a response within 12 hours, please contact us via Piazza, it may be a case that your direct emails went to the spam folder.
-
-In case you have not done so, you will install [IntelliJ](https://www.jetbrains.com/student/) with your academic license, the JDK, the Scala runtime and the IntelliJ Scala plugin, the [Simple Build Toolkit (SBT)](https://www.scala-sbt.org/1.x/docs/index.html) or some other building tool like Maven or Gradle and make sure that you can create, compile, and run Java programs. Please make sure that you can run [Java monitoring tools](https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/tooldescr025.html) or you can choose a newer JDK and tools if you want to use a more recent one.
-
-Please set up your account with [Dockerhub](https://hub.docker.com/) so that you can push your container with the project and your graders can receive it by pulling it from the dockerhub.
+## Course Project - Implement Chord, a cloud overlay network algorithm with consistent hashing using Akka/HTTP-based simulator.
 
 ## Overview
-In this course project, you will loop back to your first homework but at a different level. You will solidify the knowledge of resilient overlay networks by designing and implementing a simulator of a cloud computing facility, specifically a reliable overlay network using the Chord algorithm for distribution of work in a cloud datacenter. Your goal is to gain experience with the fundamentals of distributed hash tables (DHTs) and you will experiment with resource provisioning in the cloud environment. You will implement a cloud simulator in Scala using Akka actors and you will build and run your project using the SBT with the runMain command from the command line. In your cloud simulator, you will create the following entities and define interactions among them: actors that simulate users who enter and retrieve data from the cloud, actors who represent servers (i.e., nodes) in the cloud that store the data, and case classes that represent data that are sent to and retrieved from the cloud. The entry point to your simulated cloud will be defined with a RESTful service using [Akka/HTTP](https://doc.akka.io/docs/akka-http/current/introduction.html). 
 
-WARNING: there are a few implementations of cloud simulators and Chord implementations on the Internet. I know about (almost) all of them. You can study these implementations and feel free to use the ideas in your own implementation, and you must acknowledge what you use in your README. However, blindly copying large parts of some existing implementation in your code will result in receiving the grade F for the entire course with the transfer of your case of plagiarism to the Dean of Students Office, which will be followed with severe penalties. Most likely, you will be suspended or complete dismissed from the program in the worst case. Please do not plagiarize existing implementations, it is not worth it!
+In this project we aim to design, build and analyze the implementation of [CHORD algorithm ](https://pdos.csail.mit.edu/papers/ton:chord/paper-ton.pdf) using Akka framework to simulate a distributed hash table with a virtual overlay network for distribution of work in a cloud data center.
 
-## Functionality
-The input to your cloud simulator is the number of users, the number of the computers in the cloud - depending on your RAM and CPU it may be in millions, the minimum and the maximum number of requests per minute that each user actor can send, the duration of the simulation in minutes (more than one and less than 1000), the time marks (e.g., minute 10 during 20min simulation) when the system will capture a global state for testing (see the explanation below), the list of the items in a file (e.g., list of movies that include the title, the year, and the revenue), and the ratio of read/write requests. A read request will retrive an item from the cloud (e.g., a movie using its title/year) and a write request will store an item in the cloud (e.g., uploading a movie using its title/year - of course the GBs of data that contain the actual movie content will not be uploaded). For additional 3% bonus you can integrate your Scala simulator with a [statistical package called R](https://www.r-project.org/) to use its functions to implement the [accept/reject method](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2924739/) for sampling probabilistic distributions, which you can use to model various aspects in your simulator (e.g., the arrival of data items to store and their sizes or the failures of servers). As a result, your simulator is guided by probabilistic distributions with certain predefined parameters (e.g., the mean and the variance for the normal distribution) that you choose.
+### What is CHORD?
 
-Thus, you will use a random generator to generate the number of requests for each actor that represents users using some probabilistic distribution of your choice. In fact, you can implement different distributions or select ones from the R package or some other open-source libraries. The semantics of the data (e.g., movies, books, simply records) does not matter - feel free to chose whatever you want. Once created, actors that represent users will generate and send data to the cloud endpoint(s), which will then use the Chord algorithm to deliver this data to the actors that simulate cloud servers to store or to retrieve the data. You will use a logging framework to log all requests sent from actors and received by the cloud and responses that are returned by the cloud actors. The log will serve as the output verification of the functionality of your cloud simulator.
+Chord is a protocol and algorithm for a implementing peer-to-peer distributed hash table. A distributed hash table stores key-value pairs by assigning keys to different nodes and each of those nodes will store the values for which it is responsible. Chord algorithm specifies how keys are assigned to the nodes and how the nodes interact with each other to find and store the key in the node responsible for that data.
 
-Your main work is in implementing the Chord algorithm using the convergent hashing that we study in class, which is a realization of a DHT protocol that is described in the paper that is the mandatory reading material for this class: Chord: A Scalable Peer-to-peer Lookup Service for Internet Applications. In your simulator, Chord will store key-value pairs and find the value associated with a key that is submitted by an actor, which simulates a user. To accomplish this task, Chord distributes actors that simulate cloud servers over a dynamic network of virtual nodes (you can assume one computer per node), and it implements a protocol for finding these objects once they have been placed in the overlay network. As you can imagine, there is an invisible network that connects cloud servers, which are simulated by the actors, however, these actors impose their own overlay network by using Chord to send messages directly to one another. Every node in this network is simulated as an actor for looking up keys for user actors and for determining which actors will serve as key stores.
+### What is Akka, Actor and Akka-Http?
 
-Every key inserted into the DHT must be hashed, so that Chord will determine a node designated by the hashed value of the key, which is an m-bit unsigned integer. According to Chord, the the range of hash values for the DHT contains between 0 and (2 power m-1) inclusive. You can use a 128-bit (or a higher bit content) hash values produced by message digest algorithms such as MD5 or SHA-1 or some other hashing algorithms. You can make it a plugin feature in your simulator. An example of using MD5 in Scala is the following:
-```java
-import java.security.MessageDigest
-def md5(s: String) = { MessageDigest.getInstance("MD5").digest(s.getBytes) }
-val hashValue = md5("CS441_courseproject")
+Akka is a framework for building concurrent, distributed and resilient message driven applications.
+
+In this project we extensively use Akka Actor Model. An actor is a container for state and behavior encapsulated behind an Actor Reference. Actors can only communicate by exchanging messages.
+
+The Akka HTTP modules implement a full server- and client-side HTTP stack on top of akka-actor and akka-stream.
+
+## Team Members
+
+- Lachezar Lyubenov (llyube2@uic.edu)
+- Mehul Birari (mbirar2@uic.edu)
+- Pramodh Acharya (pachar7@uic.edu)
+
+
+### Video demo of the Simulation
+
+[![](images/thumbnail.PNG)](https://www.youtube.com/watch?v=gado6wjvBYw "Demo of the project")
+
+## Instructions to run the Simulation
+
+### Prerequisites
+
+- Your workstation should have [SBT](https://www.scala-sbt.org/) installed.
+- Your workstation should have [Docker](https://hub.docker.com/) installed.
+
+#### Steps to execute this project via Docker Image
+
+Docker image for executing this project is at 
+[Chord Simulation Docker Image](https://hub.docker.com/r/llyube2/chord)
+
+Execute the following commands in your terminal.
+
+```
+docker pull llyube2/chord
+docker run -i -t llyube2/chord /bin/bash
 ```
 
-Actors that simulate nodes in the simulated cloud have the corresponding hash values that can be generated using unique names that your will assign to these nodes and they will be ordered based on those hashes (e.g., Node_123 => 0xDEADBEEF). Recall from the paper and the lecture that Chord orders all nodes in a ring, in which each node's successor is the node with the next highest hash value. To complete the circle, the node with the largest hash value has the node with the smallest hash value as its successor. Of course, if an item does not exist in the cloud, a corresponding "not found" message will be returned to the user actors in response to their get requests.
+### Steps to run the project via SBT shell
 
-To locate the node at which a particular key-value pair is stored, the successor to the hash value of the key should be located. That is, to look up a key, a request is sent around the ring, so that each node (after determining that it does not hold the value itself) determines whether its successor is the owner of the key, and forwards the request to this successor. As part of Chord, the node asks its successor to find the successor of the key interatively, repeating the search procedure until the node is found or the error message is produced. This is done using the finger table at each node. Details are discussed in the paper and in my lecture. To recapitulate briefly, the number of entries in the finger table is equal to m, where m is defined above. Entry e in the finger table, where 0 <= e < m, is the node which the owner of the table believes is the successor for the (hash value + 2 power e). When some node actor N receives a request to find the successor of the key defined by its hash value, it first determines whether N or N's successor is the owner of the hash value, and if so, then N services the request or forwards it to the successor. Otherwise, N locates a node in its finger table such that this node has the largest hash smaller than the hash value, and forwards the request to this node actor. You can implement variations of this algorithm and describe it in your README.
+- Clone this private repository.
+- Open the sbt shell and navigate to the path as the local repository's path.
 
-As part of testing, you must capture the global state of the system in the JSON or the XML format and dump it. The time during which the dump occurs is defined as the input to the simulator program. In your simulated world, the simulator has the power to freeze the system and walk over all actors to obtain their local states and combine them into the global state that it can save into a file whose location is defined as part of the input. After dumping the state into the file, the simulator resumes the process.
+#### Compile and Test
+- Type the following command in the sbt shell in order to build the project and run unit tests.
 
-As before, this course project script is written using a retroscripting technique, in which the project outlines are generally and loosely drawn, and the individual students improvise to create the implementation that fits their refined objectives. In doing so, students are expected to stay within the basic requirements of the course project and they are free to experiments. Asking questions is important, so please ask away at Piazza!
+```
+sbt clean compile test
+```
 
-Your course project can be divided roughly into five steps. First, you learn how actor-based programming systems work and what your building blocks are in Akka and Akka/HTTP. [Akka documentation is comprehensive with many examples](https://doc.akka.io/docs/akka/current/). I suggest that you load the source code of Akka examples into IntelliJ and explore its classes, interfaces, and dependencies. Second, you design your own cloud simulator for the Chord system. Next, you will create an implementation of the simulator. Fourth, you will run multiple simulations with different parameters, statistically analyze the results and report them in your documentation with explanations why some variations of error recovery result in more stability than the others in your simulations. Finally, you will create a docker configuration and build a dockerized container using your cloud simulator, and you will upload it to the docker hub using your account.
+#### Run Simulation
 
-## Baseline Submission
-Your baseline project submission should include your cloud provider architectures with their simulation implementations, a conceptual explanation in the document or in the comments in the source code of the architecture and design choices that you made, and the documentation that describe the build, deployment and the runtime simulation, to be considered for grading. Your project submission should include all your source code for the simulator and the dockerfile configurations as well as non-code artifacts (e.g., resource files if applicable), your project should be buildable using SBT. Simply copying Java example simulation programs from open-source projects and modifying them a bit will result in desk-rejecting your submission. Finally, you will provide a link to your docker image on the hub, so that we can easily download and run your simulator.
+- Type the following command in the sbt shell to run the simulation.
 
-## Piazza collaboration
-You can post questions and replies, statements, comments, discussion, etc. on Piazza. For this homework, feel free to share your ideas, mistakes, code fragments, commands from scripts, and some of your technical solutions with the rest of the class, and you can ask and advise others using Piazza on where resources and sample programs can be found on the internet, how to resolve dependencies and configuration issues. When posting question and answers on Piazza, please select the appropriate folder, i.e., courseproject to ensure that all discussion threads can be easily located. Active participants and problem solvers will receive bonuses from the big brother :-) who is watching your exchanges on Piazza (i.e., your class instructor). However, *you must not post your dockerfile or your source code!*
+```
+sbt run
+```
 
-## Git logistics
-**This is a group project,** with at least one and at most five members allowed in a group. Each student can participate in at most one group; enrolling in more than one group will result in the grade zero. Each group will select a group leader who will create a private fork and will invite the other group classmates with the write access to that fork repo. Each submission will include the names of all groupmates in the README.md and all groupmates will receive the same grade for this course project submission. Group leaders with successful submissions and good quality work will receive an additional 2% bonus for their management skills - it applied only to groups with more than two members.
+NOTE : Once the Simulation has started, you can hit the web server using your browser/postman or any other means. The server is hosted on the localhost. You can do a GET request and fetch the year a movie was released in if it is present in our data set. If not you will get a 'not found' response.
 
-If you submitted your previous homework(s), it means that you were already added as a member of CS441_Fall2019 team in Bitbucket and you will see the course project repo. You will fork this repository and your fork will be private, no one else besides you, your forkmates, the TA and your course instructor will have access to your fork. Please remember to grant a read (or write) access to your repository to your TA and your instructor and write access to your forkmates. You can commit and push your code as many times as you want. Your code will not be visible and it should not be visible to other students except for your forkmates, of course. When you push your project, your instructor and the TA will see you code in your separate private fork. Making your fork public or inviting other students except for your forkmates to join your fork before the submission deadline will result in losing your grade. For grading, only the latest push timed before the deadline will be considered. **If you push after the deadline, your grade for the homework will be zero**. For more information about using the Git and Bitbucket specifically, please use this [link as the starting point](https://confluence.atlassian.com/bitbucket/bitbucket-cloud-documentation-home-221448814.html). For those of you who struggle with the Git, I recommend a book by Ryan Hodson on Ry's Git Tutorial. The other book called Pro Git is written by Scott Chacon and Ben Straub and published by Apress and it is [freely available](https://git-scm.com/book/en/v2/). There are multiple videos on youtube that go into details of the Git organization and use.
+- Read URL Example
 
-Please follow this naming convention while submitting your work : "Firstname_Lastname_project" without quotes, where the group leader will specify her/his first and last names **exactly as the group leader is registered with the University system**, so that we can easily recognize your submission. I repeat, make sure that you will give both your TA and the course instructor the read access to your *private forked repository*.
-
-## Discussions and submission
-You can post questions and replies, statements, comments, discussion, etc. on Piazza. Remember that you cannot share your code and your solutions privately, but you can ask and advise others using Piazza and StackOverflow or some other developer networks where resources and sample programs can be found on the Internet, how to resolve dependencies and configuration issues. Yet, your implementation should be your own and you cannot share it. Alternatively, you cannot copy and paste someone else's implementation and put your name on it. Your submissions will be checked for plagiarism. **Copying code from your classmates or from some sites on the Internet will result in severe academic penalties up to the termination of your enrollment in the University**. When posting question and answers on Piazza, please select the appropriate folder, i.e., **course project** to ensure that all discussion threads can be easily located.
+`http://localhost:8080/chord?title=MyOwnMovie`
 
 
-## Submission deadline and logistics
-Tuesday, December 10, 2019 at 10PM CST via the bitbucket repository. Your submission will include the code for the simulator, your documentation with instructions and detailed explanations on how to assemble and deploy your simulator both in IntelliJ and CLI SBT, and a document that explains how you built and deployed your simulator and what your experiences are, and the results of the simulation and their **in-depth analysis**. Again, do not forget, please make sure that you will give both your TA and your instructor the read access to your private forked repository. Your name should be shown in your README.md file and other documents. Your code should compile and run from the command line using the commands like ```sbt clean compile test``` and from the docker image. Naturally, you project should be IntelliJ friendly, i.e., your graders should be able to import your code into IntelliJ and run from there. Use .gitignore to exlude files that should not be pushed into the repo.
+## Architecture of CHORD SImulator 
 
-## Evaluation criteria
-- the maximum grade for this homework is 25% with the bonus up to 1% for being the group leader for a group with more than two members. Points are subtracted from this maximum grade: for example, saying that 2% is lost if some requirement is not completed means that the resulting grade will be 25%-2% => 23%; if the core functionality does not work, no bonus points will be given;
-- the code does not work in that it does not produce a correct output or crashes: up to 25% lost;
-- no docker configuration files to build the VAP: up to 10% lost;
-- insufficient comments in your code: up to 15% lost;
-- insufficient tests in your codebase: up to 15% lost;
-- not having tests that test the functionality of your simulator: up to 25% lost;
-- missing essential comments and explanations from the source code that you wrote: up to 20% lost;
-- no instructions in README.md on how to download the docker image and how to install and run your simulator: up to 25% lost;
-- shallow analysis of the data or simply copying/pasting data from the simulator runs with no analysis: up to 15% lost;
-- your Scala code is simply a version of imperative Java code with many mutable variables: up to 5% lost;
-- your code does not have sufficient comments or your accompanying documents do not contain a description of how you designed and implemented the simulation: up to 20% lost;
-- the documentation exists but it is insufficient to understand how you planned your simulation work and how you compared various algorithms: up to 20% lost;
-- the minimum grade for this course project cannot be less than zero.
+!["simulator architecture"](images/architecture.PNG)
 
-That's it, folks!
+### Main Components of the application
+
+1. Simulation Driver:
+
+    This is the entry point to the Simulation Program. A Simulation Object is created which encompasses the below functionality.
+    - Creates all the Nodes in the Chord system.
+    - All the users for the user system are generated.
+    - The web service is created and the GET and PUT endpoints of our simulation is exposed as web services.
+    - The data to simulate is fetched from the Movie database.
+    - After the initial setup, the simulation starts and runs for a given input time capturing the states of the nodes and users at a given time based on input.
+
+2. Node (Actor)
+
+    Every node in our Chord is an actor and each actor has a number of behaviors (how they compute each message). Each node also ned to maintain its state which keeps changing continuously.
+    The different states and behaviors of a node are:
+
+    - Each node is created with it's state variables like successor, predecessor and all the node references in the finger table referring to itself. It also maintains states like number of hops via the node, write requests and read requests the node has served.
+
+    - `Join` : With the help of an existing node a new node is able to find its location based on the hash value generated for the joining node. This is accomplished by the `FindNodePosition` behavior of the the node. It is also able to find its successor and predecessor nodes as a result.
+
+    - `FindFingerNode` : This behavior helps in finding the finger nodes of the new joining node. Each node will be linked with m nodes in the finger table (where m is the number of bits used for hashing and generating the identifiers in the chord system. It can contain 2^m total nodes/unique keys)
+
+    - `UpdateFingerTables` : The newly joined node after connecting with it's successor, predecessor and the Finger table nodes, notifies all the other nodes to change their Finger tables to accommodate the new node.
+
+    - `UpdateData` : This behavior is to update data reference from the new node's successor to itself only of which range it is responsible for.
+
+    - `FindKeyNode` : This is similar to `FindNodePosition` in the sense that the input key is hashed and the node responsible for that is located by an interactive communication with the actors. This is implemented using the `ask` pattern. A randomized node gets the input request and determines if it or it's successor are the node's responsible for maintaining it. If not then routes the request to the closest preceding finger to the key's hash value the node is connected with. This continues till the node responsible is found (If there is continuous routing the request times out) and if they key-value is available (`GetValueFromNode` behavior is used to find it), then the value is returned down the chain and the user gets the response.
+
+    - `WriteKeyFindNode` : This is similar to reading a key. The same process is done but instead of reading once the node responsible for the hashed value of the key is found, the key-value pair is stored in that node using the `WriteKeyToNode` behavior.
+
+3.  User (Actor)
+
+    Impersonates a user who queries a database hosted in a data center. Its has state variables like read and write requests made. It also has the behavior of making read/write requests to the Akka based Web service.
+
+4. Web Server 
+
+    It is a simple Actor system built using Akka Http Server module. It is an abstraction over the `FindKeyNode` and `WriteKeyFindNode` behavior of the nodes. It routes the requests by the users to the nodes and the response from the nodes to the users.
+
+### The Simulation
+
+The simulation starts once the chord system is setup and the web server is started. The simulation runs for a given input number of minutes (From the ChordSimulator.conf file in src/main/resources). This simulation time is split into sub times of 1 minute each where a specific number of requests is generated from the given input range of request per minute. The read/write requests are then ade to the server via the user actors.
+Time marks are input indicating at which time of the simulation a snapshot o the actor states is to be captured. Snapshots of the actor and node states are captured at given input time marks. A mandatory snapshot of all the states along with the node data like finger tables and the data size it contains is captured after the simulation ends and written as a JSON output. Once the simulation ends All the actor systems are terminated.
+
+### Chord Algorithm
+
+#### Chord Protocol
+  - First we assign each present node and its key an m-bit identifier using SHA-1:
+  
+    - node: hash the node ID.
+    - key: hash the key.
+
+  - Identifiers are ordered in a virtual circle module 2^m, the Chord ring:
+  
+    - a ring of numbers from 0 to 2^(m-1).
+  
+#### Assigning keys to nodes
+  - Assigning key k to a node:
+  
+    - first node whose identifier is equal to or follows the identifier of key k in the identifier space
+    - successor node of k: successor(k)
+    - first node clockwise from k on Chord ring
+ 
+#### Minimal disruption
+  - Minimal disruption when node joins/leaves
+  - n joins:
+	
+	- certain keys assigned to successor(n) are now assigned to n
+  
+  - n leaves:
+	
+	- all keys assigned to n are now assigned to successor(n)
+	
+#### Lookup
+  - Each node needs to know its successor on Chord ring
+  - Query for identifier id is passed around Chord ring until successor(id) is found
+  - Result returned along reverse path
+
+#### Finger Table
+  - Chord maintains additional routing info:
+  
+	- not essential for correctness
+	- but allows acceleration of lookups
+  
+  - Each node maintains finger table with m entries:
+	
+	- n.finger(i) = successor(n + 2^i)
+	
+#### Applications of Chord 
+  - Chord File System (CFS): 
+	- Chord locates storage blocks
+	
+  - Distributed Indexes:
+    - solves Napster's central server issue
+	
+  - Large-scale combinatorial search:
+	- candidate solutions are keys, Chord maps these to machines which test them
+	
+  - Cooperative mirroring:
+    - Uses Chord to provide load balancing
+	
+  - Time-shared storage:
+    - Uses Chord to provide availability
+
+### Analysis
+
+- Refer to the document in ***`analysis`*** directory.
+
+### Limitations
+
+- Cannot handle Node failures or Nodes leaving a system.
+- The concurrency during joining of a Node to they system has ask pattern implemented to figure out the Successor, Predecessor and it's Fingers. This increases latency of a Node joining the system
+
+### Improvements
+
+- Node behavior's of leaving the system/Failure of the node should be implemented as it is a real world scenario. This will involve implementing stabilization concept explained in the CHORD paper publication.

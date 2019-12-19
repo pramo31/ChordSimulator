@@ -38,7 +38,7 @@ class User() extends Actor {
      */
     case WriteRequest(key: String, value: String) =>
       logger.info("Put Request : Insert %s with release date %s to database".format(key, value))
-      val response = Http("http://localhost:8080/chord").params(("title", key), ("date", value)).method("PUT").asString
+      val response = Http("http://localhost:8080/chord").params(("title", key), ("date", value)).method("POST").asString
       writeRequests.addAndGet(1)
       logger.info("Put Response : %s".format(response.body.toString))
 

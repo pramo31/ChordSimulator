@@ -11,7 +11,7 @@ object Constants extends Enumeration {
   val chordSystemNamingPrefix: String = "akka://" + chordActorSystem + "/user/"
   val nodePrefix = "N"
 
-  val m: Int = 22 //math.ceil(math.log10(Integer.MAX_VALUE) / math.log10(2)).toInt - 1
+  val m: Int = 15 //math.ceil(math.log10(Integer.MAX_VALUE) / math.log10(2)).toInt - 1
   val totalSpace: Int = Math.pow(2, m).toInt
 
   val logConfig =

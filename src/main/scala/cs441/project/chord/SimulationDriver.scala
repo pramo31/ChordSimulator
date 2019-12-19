@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import akka.util.Timeout
 import cs441.project.chord.config.{Constants, SimulationConfig}
+import cs441.project.chord.core.Print
 import cs441.project.chord.utils._
 import org.apache.log4j.Logger
 
@@ -79,6 +80,13 @@ object SimulationDriver {
 
     // Capture snapshot chord system
     SimulationUtils.captureNodeDetails(simulationObject)
+
+
+    for (elem <- simulationObject.chordNodes.sorted) {
+      val node = simulationObject.chordSystem.actorSelection(Constants.chordSystemNamingPrefix + elem)
+      node ! Print
+      Thread.sleep((100))
+    }
 
     val end = System.currentTimeMillis()
     logger.info("Effective simulation time including snapshot creation : %s seconds".format((end - start) / 1000))
